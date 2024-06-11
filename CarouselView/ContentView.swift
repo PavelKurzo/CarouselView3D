@@ -53,9 +53,14 @@ enum Name: String, CaseIterable, Codable {
     }
 }
 
+enum SwipeDirection {
+    case left, right, none
+}
+
 struct ContentView: View {
     @State var dragAmount = CGSize.zero
     @State var activeIndex: Int = 0
+    @State private var swipeDirection: SwipeDirection = .none
     
     var body: some View {
         GeometryReader { geo in
@@ -84,13 +89,17 @@ struct ContentView: View {
                 .onEnded { value in
                     let threshold: CGFloat = 50
                     if value.translation.width < -threshold {
+                        swipeDirection = .left
                         withAnimation {
                             activeIndex = (activeIndex - 1 + Name.count) % Name.count
                         }
                     } else if value.translation.width > threshold {
+                        swipeDirection = .right
                         withAnimation {
                             activeIndex = (activeIndex + 1) % Name.count
                         }
+                    } else {
+                        swipeDirection = .none
                     }
                     dragAmount = .zero
                 }
@@ -130,7 +139,7 @@ struct ContentView: View {
             distanceToCenter += Name.count
         }
         
-        let adjacentOffset: Double = -80
+        let adjacentOffset: Double = -90
         let nonAdjacentOffset: Double = -120
         
         let offset = distanceToCenter == 0 ? 0 : (abs(distanceToCenter) == 1 ? adjacentOffset : nonAdjacentOffset) * (distanceToCenter < 0 ? -1 : 1)
@@ -138,12 +147,25 @@ struct ContentView: View {
         return offset
     }
     
+//    func zIndex(for index: Int) -> Double {
+//        let distanceFromActive = (index - activeIndex + Name.count) % Name.count
+//        if distanceFromActive == 0 {
+//            return Double(Name.count)
+//        } else {
+//            return Double(abs(distanceFromActive - Name.count / 2))
+//        }
+//    }
+    
     func zIndex(for index: Int) -> Double {
         let distanceFromActive = (index - activeIndex + Name.count) % Name.count
+        let halfCount = Name.count / 2
+
         if distanceFromActive == 0 {
             return Double(Name.count)
+        } else if distanceFromActive <= halfCount {
+            return Double(Name.count - distanceFromActive)
         } else {
-            return Double(abs(distanceFromActive - Name.count / 2))
+            return Double(distanceFromActive - halfCount)
         }
     }
 }
